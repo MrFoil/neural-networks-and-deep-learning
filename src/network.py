@@ -13,6 +13,7 @@ and omits many desirable features.
 # Standard library
 import random
 import codecs, json
+import types
 import pickle
 
 # Third-party libraries
@@ -20,22 +21,56 @@ import numpy as np
 
 class Network(object):
 
-    def __init__(self, sizes):
+    def __init__(self, argument):
+        if isinstance(argument, str):
+            self.initFromFile(argument)
+        if isinstance(argument, list):
+            self.initFromScratch(argument)
+
+
+    def initFromScratch(self, argument):
         """The list ``sizes`` contains the number of neurons in the
-        respective layers of the network.  For example, if the list
-        was [2, 3, 1] then it would be a three-layer network, with the
-        first layer containing 2 neurons, the second layer 3 neurons,
-        and the third layer 1 neuron.  The biases and weights for the
-        network are initialized randomly, using a Gaussian
-        distribution with mean 0, and variance 1.  Note that the first
-        layer is assumed to be an input layer, and by convention we
-        won't set any biases for those neurons, since biases are only
-        ever used in computing the outputs from later layers."""
+                respective layers of the network.  For example, if the list
+                was [2, 3, 1] then it would be a three-layer network, with the
+                first layer containing 2 neurons, the second layer 3 neurons,
+                and the third layer 1 neuron.  The biases and weights for the
+                network are initialized randomly, using a Gaussian
+                distribution with mean 0, and variance 1.  Note that the first
+                layer is assumed to be an input layer, and by convention we
+                won't set any biases for those neurons, since biases are only
+                ever used in computing the outputs from later layers."""
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x)
                         for x, y in zip(sizes[:-1], sizes[1:])]
+
+    def initFromFile(self, argument):
+        json_data = open("nn784-100-10_50-epochs.json").read()
+        network_body = json.loads(json_data)
+
+        sizes = network_body["sizes"]
+        num_layers = network_body["num_layers"]
+
+        parsed_biases = []
+        for layer in network_body["biases"]:
+            parsed_biases.append(np.asarray(layer, dtype=np.float64).reshape(len(layer), 1))
+
+        unconverted_weights = []
+        for layer in network_body["weights"]:
+            layer_weights = []
+            for w in layer:
+                layer_weights.extend(w)
+            unconverted_weights.append(layer_weights)
+
+        parsed_weights = []
+        for i, layer in enumerate(unconverted_weights):
+            parsed_weights.append(np.asarray(layer, dtype=np.float64).reshape(sizes[i + 1], sizes[i]))
+
+        self.sizes = sizes
+        self.num_layers = num_layers
+        self.biases = parsed_biases
+        self.weights = parsed_weights
 
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
