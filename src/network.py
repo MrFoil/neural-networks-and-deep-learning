@@ -28,7 +28,7 @@ class Network(object):
             self.initFromScratch(argument)
 
 
-    def initFromScratch(self, argument):
+    def initFromScratch(self, sizes):
         """The list ``sizes`` contains the number of neurons in the
                 respective layers of the network.  For example, if the list
                 was [2, 3, 1] then it would be a three-layer network, with the
@@ -98,7 +98,7 @@ class Network(object):
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
             if test_data:
-                print ("Epoch {0}: {1} / {2}".format(
+                print ("Epoch {0}: network accuracy is {1} right answers of {2} samples".format(
                     j, self.evaluate(test_data), n_test))
             else:
                 print ("Epoch {0} complete".format(j))
